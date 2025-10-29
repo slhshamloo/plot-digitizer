@@ -183,6 +183,7 @@ def _get_svg_data(file_path, labels, mode, xref, yref):
     transforms = []
     if mode == 'group':
         current_group = None
+        group_nested_level = 0
 
     with open(file_path, 'r') as svg_file:
         svg_content = svg_file.readlines()
@@ -190,9 +191,15 @@ def _get_svg_data(file_path, labels, mode, xref, yref):
         line = svg_content[i]
         _handle_group_transform(transforms, svg_content, i)
         if mode == 'group' and '</g>' in line:
-            current_group = None
+            if group_nested_level > 0:
+                group_nested_level -= 1
+            else:
+                current_group = None
         if mode == 'group' and re.search(r'<g(?!\S)', line):
-            current_group = _get_group_label(labels, svg_content, i)
+            if current_group is not None:
+                group_nested_level += 1
+            else:
+                current_group = _get_group_label(labels, svg_content, i)
         if '<path' in line:
             path_label, points, path_transform = _get_path_data(
                 transforms, svg_content, i)
@@ -222,8 +229,7 @@ def _get_svg_data(file_path, labels, mode, xref, yref):
     return xy_dict, ref_points, ref_real_range
 
 
-def digitize_svg(file_path, labels, mode='path',
-                 xref='xref', yref='yref'):
+def digitize_svg(file_path, labels, mode='path', xref='xref', yref='yref'):
     if mode not in ['path', 'group']:
         raise ValueError("Mode must be either 'path' or 'group'")
     xy_dict, ref_points, ref_real_range = _get_svg_data(

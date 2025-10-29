@@ -200,9 +200,6 @@ def _get_svg_data(file_path, labels, mode, xref, yref):
                 if path_transform:
                     transforms.pop()
                 continue
-            if path_label is not None and path_label.startswith(xref):
-                print(transforms)
-                print('\n')
             points = _apply_transforms(points, transforms, path_transform)
 
             if path_label is not None and path_label.startswith(xref):
@@ -252,10 +249,10 @@ def digitize_svg(file_path, labels, mode='path',
     return xy_dict
 
 
-def digitize_svg_to_csv(file_path, labels, mode='path',
+def digitize_svg_to_csv(file_path, labels, output=None, mode='path',
                         xref='xref', yref='yref', xheader='x', yheader='y'):
     xy_dict = digitize_svg(file_path, labels, mode, xref, yref)
-    save_path_prefix = file_path[:-4] # remove .svg
+    save_path_prefix = file_path[:-4] if output is None else output
     for label in labels:
         xy_data = xy_dict[label]
         if xy_data.size == 0:
@@ -269,6 +266,8 @@ def main():
     parser.add_argument('filepath', help="Path to the SVG file")
     parser.add_argument('labels', nargs="+",
                         help="labels of the data series to extract")
+    parser.add_argument('-o', '--output', default=None,
+                        help="Output CSV file path prefix")
     parser.add_argument(
         '-m', '--mode', choices=["path", "group"], default="path",
         help="Mode of operation. 'path' mode for lines and 'group'"
@@ -279,7 +278,7 @@ def main():
                         help="Label prefix for the reference y axis path")
     args = parser.parse_args()
     digitize_svg_to_csv(args.filepath, args.labels, mode=args.mode,
-                        xref=args.xref, yref=args.yref)
+                        xref=args.xref, yref=args.yref, output=args.output)
 
 
 if __name__ == "__main__":

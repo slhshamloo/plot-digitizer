@@ -106,4 +106,42 @@ After completing these steps, save the document in SVG format. The file is now r
 processed by the script.
 
 ## Script Usage
+To run the script, execute `digitize.py` it using Python. Make sure you have Numpy
+installed in your environment. Here is the general usage:
 
+```bash
+python -m digitize [options] <input_svg_file> <labels...>
+```
+
+Where `<input_svg_file>` is the path to the preprocessed SVG file, and `<labels...>` are the
+names of the data series you want to extract (as labeled in the previous steps). If you
+want to extract scatter points, you need to select `group` mode by adding the `--mode group`
+or `-m group` option.
+
+The script will save the extracted data points into separate CSV files for each data series,
+named `<filename>_<label>.csv`, where `<filename>` is the name of the input SVG file without
+the extension, and `<label>` is the name of the data series. The CSV files will be saved in
+the same directory as the input SVG file. To change this behavior, you can use the `--output`
+or `-o` option to specify a different file path prefix for the output CSV files. For example,
+using `-o data/mydata` will save the files as `mydata_<label>.csv` in the `data` directory.
+
+As an example, for our practice document, I made the preprocessed SVG file for both plots.
+For the [line plot](example/line.svg), we have
+
+```bash
+python -m digitize --mode path example/line.svg exp sqrt
+```
+
+which will generate `example/line_exp.csv` and `example/line_sqrt.csv`. The `--mode path`
+is optional here, as the default mode is `path`. For the [scatter plot](example/scatter.svg),
+
+```bash
+python -m digitize --mode group example/scatter.svg 0.5x 1.5x
+```
+will generate `example/scatter_0.5x.csv` and `example/scatter_1.5x.csv`.
+
+You can also choose the name of the reference axes by using the `--xref` (or `-x`) and
+`--yref` (or `-y`) options. By default, these are set to `xref` and `yref`, respectively.
+
+You can run these commands in the provided `line.sh` and `scatter.sh` scripts. All the files
+used in the examples are included in the `example` directory.

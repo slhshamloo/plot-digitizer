@@ -1,0 +1,1 @@
+python -m digitize --mode group example/scat.svg 0.5x "1.5x

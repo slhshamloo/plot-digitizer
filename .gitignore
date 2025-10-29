@@ -1,0 +1,4 @@
+# Ignore all but the .tex file and the fig folder in the example_src directory
+example_src/*
+!example_src/*.tex
+!example_src/fig/

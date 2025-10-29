@@ -1,0 +1,29 @@
+\documentclass{article}
+\usepackage{lipsum}
+\usepackage{subcaption}
+\usepackage{graphicx}
+
+\title{A Digitization Practice}
+\author{Saleh Shamloo}
+\date{October 28, 2025}
+
+\begin{document}
+\maketitle
+\lipsum[1-3]
+\section{The plots}
+\begin{figure}[h]
+    \centering
+    \begin{subfigure}{0.45\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{fig/line}
+        \caption{A line plot to be digitized with the \texttt{path} mode.}
+    \end{subfigure}
+    \begin{subfigure}{0.45\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{fig/scat}
+        \caption{A scatter plot to be digitized with the \texttt{group} mode.}
+    \end{subfigure}
+    \caption{Plots for digitization practice.}
+\end{figure}
+\lipsum[4-6]
+\end{document}

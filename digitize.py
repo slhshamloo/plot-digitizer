@@ -1,5 +1,6 @@
 import re
 import numpy as np
+from argparse import ArgumentParser
 
 
 def _get_rotate_matrix(angle, cx=0, cy=0):
@@ -102,7 +103,7 @@ def _get_path_points(line):
 def _handle_group_transform(transforms, svg_content, line_idx):
     line = svg_content[line_idx]
     if '</g>' in line:
-        if transforms:
+        if len(transforms) > 0:
             transforms.pop()
     if re.search(r'<g(?!\S)', line): # match <g and not <g...
         # find the transformation
@@ -119,20 +120,20 @@ def _handle_group_transform(transforms, svg_content, line_idx):
             transforms.append(np.eye(3))
 
 
-def _get_group_name(names, svg_content, line_idx):
+def _get_group_label(labels, svg_content, line_idx):
     i = line_idx + 1
     while i < len(svg_content) and not '<' in svg_content[i]:
-        name_match = re.search(r'label="([^"]+)"', svg_content[i])
-        if name_match:
-            name = name_match.group(1)
-            if name in names:
-                return name
+        label_match = re.search(r'label="([^"]+)"', svg_content[i])
+        if label_match:
+            label = label_match.group(1)
+            if label in labels:
+                return label
         i += 1
     return None
 
 
 def _get_path_data(transforms, svg_content, idx):
-    path_name = None
+    path_label = None
     points = None
     transformed = False
     i = idx + 1
@@ -144,36 +145,39 @@ def _get_path_data(transforms, svg_content, idx):
         if transform is not None:
             transforms.append(transform)
             transformed = True
-        name_match = re.search(r'label="([^"]+)"', svg_content[i])
-        if name_match:
-            path_name = name_match.group(1)
+        label_match = re.search(r'label="([^"]+)"', svg_content[i])
+        if label_match:
+            path_label = label_match.group(1)
         if '/>' in svg_content[i]:
             break
         i += 1
-    return path_name, points, transformed
+    return path_label, points, transformed
 
 
 def _apply_transforms(points, transforms, path_transform):
+    if len(transforms) == 0:
+        return points
     homogeneous_points = np.vstack((points, np.ones(points.shape[1])))
-    homogeneous_points = transforms[-1] @ homogeneous_points
+    for transform in transforms[::-1]:
+        homogeneous_points = transform @ homogeneous_points
     points = homogeneous_points[:2, :]
     if path_transform:
         transforms.pop()
     return points
 
 
-def _extract_real_range(path_name):
-    number_match = re.findall(r'[-+]?\d*\.?\d+e?[-+]?\d*', path_name)
+def _extract_real_range(path_label):
+    number_match = re.findall(r'[-+]?\d*\.?\d+e?[-+]?\d*', path_label)
     if len(number_match) != 2:
         raise RuntimeError(
-            "Reference path name must contain exactly two numbers "
-            f"indicating the real data range. Instead, got: '{path_name}'"
+            "Reference path label must contain exactly two numbers "
+            f"indicating the real data range. Instead, got: '{path_label}'"
             f"which contains {len(number_match)} numbers.")
     return [float(number_match[0]), float(number_match[1])]
 
 
-def _get_svg_data(file_path, names, mode, xref, yref):
-    xy_dict = {name: np.empty((2, 0), dtype=float) for name in names}
+def _get_svg_data(file_path, labels, mode, xref, yref):
+    xy_dict = {label: np.empty((2, 0), dtype=float) for label in labels}
     ref_points = [None, None]
     ref_real_range = [None, None]
     transforms = []
@@ -188,20 +192,25 @@ def _get_svg_data(file_path, names, mode, xref, yref):
         if mode == 'group' and '</g>' in line:
             current_group = None
         if mode == 'group' and re.search(r'<g(?!\S)', line):
-            current_group = _get_group_name(names, svg_content, i)
+            current_group = _get_group_label(labels, svg_content, i)
         if '<path' in line:
-            path_name, points, path_transform = _get_path_data(
+            path_label, points, path_transform = _get_path_data(
                 transforms, svg_content, i)
             if points is None:
+                if path_transform:
+                    transforms.pop()
                 continue
+            if path_label is not None and path_label.startswith(xref):
+                print(transforms)
+                print('\n')
             points = _apply_transforms(points, transforms, path_transform)
 
-            if path_name is not None and path_name.startswith(xref):
+            if path_label is not None and path_label.startswith(xref):
                 ref_points[0] = [points[0, 0], points[0, -1]]
-                ref_real_range[0] = _extract_real_range(path_name)
-            elif path_name is not None and path_name.startswith(yref):
+                ref_real_range[0] = _extract_real_range(path_label)
+            elif path_label is not None and path_label.startswith(yref):
                 ref_points[1] = [points[1, 0], points[1, -1]]
-                ref_real_range[1] = _extract_real_range(path_name)
+                ref_real_range[1] = _extract_real_range(path_label)
             elif mode == 'group' and current_group is not None:
                 # To judge the representative point of the group, I take the
                 # midpoint of the bounding box. This tends to be more robust
@@ -211,52 +220,66 @@ def _get_svg_data(file_path, names, mode, xref, yref):
                          + np.min(points, axis=1, keepdims=True)) / 2
                 xy_dict[current_group] = np.hstack(
                     (xy_dict[current_group], point))
-            elif mode == 'path' and path_name in names:
-                xy_dict[path_name] = points
+            elif mode == 'path' and path_label in labels:
+                xy_dict[path_label] = points
     return xy_dict, ref_points, ref_real_range
 
 
-def digitize_svg(file_path, names, mode='path',
+def digitize_svg(file_path, labels, mode='path',
                  xref='xref', yref='yref'):
     if mode not in ['path', 'group']:
         raise ValueError("Mode must be either 'path' or 'group'")
     xy_dict, ref_points, ref_real_range = _get_svg_data(
-        file_path, names, mode, xref, yref)
+        file_path, labels, mode, xref, yref)
     if ref_points[0] is None:
         raise ValueError(f"Reference x path '{xref}' not found in SVG.")
     if ref_points[1] is None:
         raise ValueError(f"Reference y path '{yref}' not found in SVG.")
     ref_points = np.array(ref_points)
     ref_real_range = np.array(ref_real_range)
-    for name in names:
-        xy_data = xy_dict[name]
+    for label in labels:
+        xy_data = xy_dict[label]
         if xy_data.size == 0:
             continue
         # Normalize to ref points
         xy_data = ((xy_data - ref_points[:, 0][:, np.newaxis])
                    / (ref_points[:, 1] - ref_points[:, 0])[:, np.newaxis])
         # Scale to real data range
-        xy_data = (xy_data * (ref_real_range[:,1]- ref_real_range[:,0]
+        xy_data = (xy_data * (ref_real_range[:,1]-ref_real_range[:,0]
                               )[:, np.newaxis]
                    + ref_real_range[:, 0][:, np.newaxis])
-        xy_dict[name] = xy_data[:, np.argsort(xy_data[0, :])]
+        xy_dict[label] = xy_data[:, np.argsort(xy_data[0, :])]
     return xy_dict
 
 
-def digitize_svg_to_csv(file_path, names, mode='path',
+def digitize_svg_to_csv(file_path, labels, mode='path',
                         xref='xref', yref='yref', xheader='x', yheader='y'):
-    xy_dict = digitize_svg(file_path, names, mode, xref, yref)
+    xy_dict = digitize_svg(file_path, labels, mode, xref, yref)
     save_path_prefix = file_path[:-4] # remove .svg
-    for name in names:
-        xy_data = xy_dict[name]
+    for label in labels:
+        xy_data = xy_dict[label]
         if xy_data.size == 0:
             continue
-        np.savetxt(f"{save_path_prefix}_{name}.csv", xy_data.T,
+        np.savetxt(f"{save_path_prefix}_{label}.csv", xy_data.T,
                    header=f"{xheader},{yheader}", delimiter=',')
 
 
 def main():
-    digitize_svg_to_csv("OD13K.svg", names=["OD13K"], mode="group")
+    parser = ArgumentParser()
+    parser.add_argument('filepath', help="Path to the SVG file")
+    parser.add_argument('labels', nargs="+",
+                        help="labels of the data series to extract")
+    parser.add_argument(
+        '-m', '--mode', choices=["path", "group"], default="path",
+        help="Mode of operation. 'path' mode for lines and 'group'"
+             " mode for scatter plots.")
+    parser.add_argument('-x', '--xref', default='xref',
+                        help="Label prefix for the reference x axis path")
+    parser.add_argument('-y', '--yref', default='yref',
+                        help="Label prefix for the reference y axis path")
+    args = parser.parse_args()
+    digitize_svg_to_csv(args.filepath, args.labels, mode=args.mode,
+                        xref=args.xref, yref=args.yref)
 
 
 if __name__ == "__main__":

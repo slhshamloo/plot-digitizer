@@ -73,7 +73,8 @@ The last step is to label the data series you want to extract. There are two pos
    data series. Here, I named the blue line as "exp" and the red line as "sqrt".
 2. If the data is represented as scattered points, then you need to group together the points
    corresponding to each data series and name the group accordingly. To make a new group in
-   Inkscape, right-click on your selection in the layers and objects panel and choose "Group".
+   Inkscape, right-click on your selection in the layers and objects panel and choose "Group"
+   or just press Ctrl+G.
    In the example, I put the blue circles into a group named "0.5x" and the red triangles
    into a group named "1.5x".
 

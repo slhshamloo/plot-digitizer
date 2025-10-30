@@ -168,12 +168,7 @@ def _apply_transforms(points, transforms, path_transform):
 
 def _extract_real_range(path_label):
     number_match = re.findall(r'[-+]?\d*\.?\d+e?[-+]?\d*', path_label)
-    if len(number_match) != 2:
-        raise RuntimeError(
-            "Reference path label must contain exactly two numbers "
-            f"indicating the real data range. Instead, got: '{path_label}'"
-            f"which contains {len(number_match)} numbers.")
-    return [float(number_match[0]), float(number_match[1])]
+    return [float(number_match[-2]), float(number_match[-1])]
 
 
 def _get_svg_data(file_path, labels, mode, xref, yref):

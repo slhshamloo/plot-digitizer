@@ -69,11 +69,13 @@ only labeling it as `yref` this time. In our example, the y-axis line name would
 ### Step 3: Indicate Data to Extract
 The last step is to label the data series you want to extract. There are two possibilities:
 
-1. If the data is represented as lines, then you can simply rename the path corresponding to the
+1. If the data is represented as lines, then you can simply rename the path corresponding to
    data series. Here, I named the blue line as "exp" and the red line as "sqrt".
 2. If the data is represented as scattered points, then you need to group together the points
-   corresponding to each data series and name the group accordingly. In the example, I grouped
-   the blue circles into a group named "0.5x" and the red triangles into a group named "1.5x".
+   corresponding to each data series and name the group accordingly. To make a new group in
+   Inkscape, right-click on your selection in the layers and objects panel and choose "Group".
+   In the example, I put the blue circles into a group named "0.5x" and the red triangles
+   into a group named "1.5x".
 
 Again, remember that in Inkscape, you might need to double-click on an area to enter a group
 before being able to select an individual object.

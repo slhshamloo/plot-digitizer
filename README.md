@@ -143,8 +143,10 @@ python -m digitize --mode group example/scatter.svg 0.5x 1.5x
 ```
 will generate `example/scatter_0.5x.csv` and `example/scatter_1.5x.csv`.
 
-You can also choose the name of the reference axes by using the `--xref` (or `-x`) and
-`--yref` (or `-y`) options. By default, these are set to `xref` and `yref`, respectively.
+You can also choose the name of the reference axes by using the `--xref` (or `-xr`) and
+`--yref` (or `-yr`) options. By default, these are set to `xref` and `yref`, respectively.
+To change the headers of the output CSV files, you can use the `--xheader` (or `-xh`) and
+`--yheader` (or `-yh`) options. By default, these are set to `x` and `y`.
 
 You can run these commands in the provided `line.sh` and `scatter.sh` scripts. All the files
 used in the examples are included in the `example` directory.

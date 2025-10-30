@@ -273,13 +273,18 @@ def main():
         '-m', '--mode', choices=["path", "group"], default="path",
         help="Mode of operation. 'path' mode for lines and 'group'"
              " mode for scatter plots.")
-    parser.add_argument('-x', '--xref', default='xref',
+    parser.add_argument('-xr', '--xref', default='xref',
                         help="Label prefix for the reference x axis path")
-    parser.add_argument('-y', '--yref', default='yref',
+    parser.add_argument('-yr', '--yref', default='yref',
                         help="Label prefix for the reference y axis path")
+    parser.add_argument('-xh', '--xheader', default='x',
+                        help="Header for x column in output CSV")
+    parser.add_argument('-yh', '--yheader', default='y',
+                        help="Header for y column in output CSV")
     args = parser.parse_args()
     digitize_svg_to_csv(args.filepath, args.labels, mode=args.mode,
-                        xref=args.xref, yref=args.yref, output=args.output)
+                        xref=args.xref, yref=args.yref, output=args.output,
+                        xheader=args.xheader, yheader=args.yheader)
 
 
 if __name__ == "__main__":

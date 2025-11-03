@@ -61,16 +61,20 @@ def _get_path_points(line):
         return None
 
     d_str = d_match.group(1)
-    commands = re.findall(r'([MmLlHhVvAaCcQqSsTt])|([-+]?\d*\.?\d+e?[-+]?\d*)', d_str)
+    commands = re.findall(
+        r'([MmLlHhVvAaCcQqSsTtZz])|([-+]?\d*\.?\d+e?[-+]?\d*)', d_str)
     points = np.empty((0, 2), dtype=float)
     current_pos = np.array([0.0, 0.0])
     i = 0
+    path_start_idx = 0
     command = 'm'
     while i < len(commands):
         if commands[i][0]:
             command = commands[i][0]
             i += 1
         if command in 'MmLlAaCcSsTtQq':
+            if command in 'Mm':
+                path_start_idx = len(points)
             # skip control points
             if command in 'Aa':
                 i += 5
@@ -93,6 +97,9 @@ def _get_path_points(line):
             current_pos[1] = float(commands[i][1])
         elif command == 'v':
             current_pos[1] += float(commands[i][1])
+        elif command in 'Zz':
+            current_pos = points[path_start_idx]
+            continue
         points = np.vstack((points, current_pos))
         i += 1
     if len(points) == 1:

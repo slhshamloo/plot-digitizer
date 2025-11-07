@@ -109,6 +109,11 @@ After completing these steps, save the document in SVG format. The file is now r
 processed by the script.
 
 ## Script Usage
+**PRO TIP:** Using command-line scripts can be difficult in Windows environments, especially when
+working on files saved in the cloud (e.g., OneDrive). In such cases, I recommend using calling the
+main function of the module (`digitize_svg_to_csv`) directly in your own Python code or Jupyter
+notebook. This way, you can avoid path issues and have more control over the execution.
+
 To run the script, execute `digitize.py` it using Python. Make sure you have Numpy
 installed in your environment. Here is the general usage:
 
